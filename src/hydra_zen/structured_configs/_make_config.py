@@ -272,7 +272,4 @@ def make_config(
 
     See :ref:`data-val` for more general data validation capabilities via hydra-zen.
     """
-    _locals = locals().copy()
-    fields_as_args = _locals.pop("fields_as_args")
-    fields_as_kwargs = _locals.pop("fields_as_kwargs")
-    return DefaultBuilds.make_config(*fields_as_args, **_locals, **fields_as_kwargs)  # type: ignore
+    pass

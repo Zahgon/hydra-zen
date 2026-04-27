@@ -113,12 +113,7 @@ def partial(
 
 def get_obj(*, path: str) -> _tp.Union[type, _tp.Callable[..., _tp.Any]]:
     """Imports an object given the specified path."""
-    try:
-        cl = _hydra_internal_utils._locate(path)
-        return cl
-    except Exception as e:  # pragma: no cover
-        _log.error(f"Error getting callable at {path} : {e}")
-        raise e
+    pass
 
 
 def zen_processing(
@@ -130,67 +125,10 @@ def zen_processing(
     _zen_target_wrapper: _tp.Union[None, _Wrapper] = None,
     **kwargs: _tp.Any,
 ) -> _tp.Any:
-    if isinstance(_zen_wrappers, str) or not isinstance(_zen_wrappers, _tp.Sequence):
-        unresolved_wrappers: _tp.Sequence[_WrapperConf] = (_zen_wrappers,)
-    else:
-        unresolved_wrappers: _tp.Sequence[_WrapperConf] = _zen_wrappers
-    del _zen_wrappers
-
-    resolved_wrappers: _tp.List[_Wrapper] = []
-
-    for _unresolved in unresolved_wrappers:
-        if _unresolved is None:
-            # We permit interpolated fields to resolve to `None`; this is
-            # a nice pattern for enabling people to ergonomically toggle
-            # wrappers off.
-            continue
-        if isinstance(_unresolved, str):
-            # Hydra will have already raised on missing interpolation
-            # keys by here
-            assert not _is_interpolated_string(_unresolved)
-            _unresolved = get_obj(path=_unresolved)
-
-        if not callable(_unresolved):
-            raise TypeError(
-                f"Instantiating {_zen_target}: `zen_wrappers` was passed a non-callable object: {_unresolved}"
-            )
-        else:
-            resolved = _unresolved
-        del _unresolved
-        resolved_wrappers.append(resolved)
-
-    obj = get_obj(path=_zen_target)
-    if _zen_target_wrapper is not None:
-        resolved_wrappers = [_zen_target_wrapper] + resolved_wrappers
-
-    # first wrapper listed should be called first
-    # [f1, f2, f3, ...] ->
-    #    target = f1(target)
-    #    target = f2(target)
-    #    target = f3(target)
-    #    ...
-
-    if _zen_exclude:
-        excluded_set = set(_zen_exclude)
-        kwargs = {k: v for k, v in kwargs.items() if k not in excluded_set}
-
-    if _zen_partial is True:
-        if not resolved_wrappers:
-            return _functools.partial(obj, *args, **kwargs)
-        else:
-            # if we have wrappers, we need to use the partial_with_wrapper
-            # class to ensure that the wrappers are called in the right order
-            return partial_with_wrapper(tuple(resolved_wrappers), obj, *args, **kwargs)
-    for wrapper in resolved_wrappers:
-        obj = wrapper(obj)
-    return obj(*args, **kwargs)
+    pass
 
 
 def as_default_dict(
     dict_: _tp.Dict[_tp.Any, _tp.Any], *, default_factory: _tp.Any
 ) -> _tp.DefaultDict[_tp.Any, _tp.Any]:
-    from collections import defaultdict
-
-    obj = defaultdict(default_factory)
-    obj.update(dict_)
-    return obj
+    pass

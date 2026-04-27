@@ -32,35 +32,11 @@ def _constructor_as_fn(cls: Any) -> Any:
     `cls`/`self` should be passed explicitly to the constructor. This shim
     corrects that.
     """
-
-    @functools.wraps(cls)
-    def wrapper_function(*args, **kwargs):
-        return cls(*args, **kwargs)
-
-    annotations = getattr(cls, "__annotations__", {})
-
-    # In a case like:
-    # class A:
-    #   x: int
-    #   def __init__(self, y: int): ...
-    #
-    #  y will not be in __annotations__ but it should be in the signature,
-    #  so we add it to the annotations.
-
-    sig = inspect.signature(cls)
-    for p, v in sig.parameters.items():
-        if p not in annotations:
-            annotations[p] = v.annotation
-    wrapper_function.__annotations__ = annotations
-
-    return wrapper_function
+    pass
 
 
 def _get_signature(x: Any) -> Union[None, inspect.Signature]:
-    try:
-        return inspect.signature(x)
-    except Exception:
-        return None
+    pass
 
 
 def pydantic_parser(target: _T, *, parser: Callable[[_T], _T] = _default_parser) -> _T:
@@ -108,20 +84,7 @@ def pydantic_parser(target: _T, *, parser: Callable[[_T], _T] = _default_parser)
     >>> instantiate(conf, _target_wrapper_=pydantic_parser)
     (1, 2, 3)
     """
-    if inspect.isbuiltin(target):
-        return cast(_T, target)
-
-    if isinstance(target, type) and issubclass(target, _pyd.BaseModel):
-        # this already applies pydantic parsing
-        return cast(_T, target)
-
-    if not (_get_signature(target)):
-        return cast(_T, target)
-
-    if inspect.isclass(target):
-        return cast(_T, parser(_constructor_as_fn(target)))
-
-    return parser(target)
+    pass
 
 
 def validates_with_pydantic(
@@ -132,4 +95,4 @@ def validates_with_pydantic(
 
        Use `hydra_zen.third_party.pydantic.pydantic_parser` instead.
     """
-    return pydantic_parser(obj, parser=validator)
+    pass

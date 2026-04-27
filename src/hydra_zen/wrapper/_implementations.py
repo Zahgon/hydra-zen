@@ -87,7 +87,7 @@ ConfigLike: TypeAlias = Union[
 def is_instantiable(
     cfg: Any,
 ) -> TypeGuard[ConfigLike]:
-    return is_dataclass(cfg) or isinstance(cfg, _SUPPORTED_INSTANTIATION_TYPES)
+    pass
 
 
 SKIPPED_PARAM_KINDS = frozenset(
@@ -96,15 +96,11 @@ SKIPPED_PARAM_KINDS = frozenset(
 
 
 def _flat_call(x: Iterable[Callable[P, Any]]) -> Callable[P, None]:
-    def f(*args: P.args, **kwargs: P.kwargs) -> None:
-        for fn in x:
-            fn(*args, **kwargs)
-
-    return f
+    pass
 
 
 def _identity(x: F2) -> F2:
-    return x
+    pass
 
 
 class Zen(Generic[P, R]):
@@ -286,25 +282,7 @@ class Zen(Generic[P, R]):
             str,
         ],
     ) -> DictConfig:
-        if is_dataclass(cfg):
-            # ensures that default factories and interpolated fields
-            # are resolved
-            cfg = OmegaConf.structured(cfg)
-
-        elif not OmegaConf.is_config(cfg):
-            if not isinstance(cfg, (dict, str)):
-                raise HydraZenValidationError(
-                    f"`cfg` must be a dataclass, dict/DictConfig, or "
-                    f"dict-style yaml-string. Got {cfg}"
-                )
-            cfg = OmegaConf.create(cfg)
-
-        if not isinstance(cfg, DictConfig):
-            raise HydraZenValidationError(
-                f"`cfg` must be a dataclass, dict/DictConfig, or "
-                f"dict-style yaml-string. Got {cfg}"
-            )
-        return cfg
+        pass
 
     def validate(self, __cfg: Union[ConfigLike, str]) -> None:
         """Validates the input config based on the decorated function without calling said function.
@@ -320,56 +298,13 @@ class Zen(Generic[P, R]):
         HydraValidationError
             `cfg` is not a valid input to the zen-wrapped function.
         """
-        for _f in self._pre_call_iterable:
-            if isinstance(_f, Zen):
-                _f.validate(__cfg)
-
-        cfg = self._normalize_cfg(__cfg)
-
-        num_pos_only = sum(
-            p.kind is p.POSITIONAL_ONLY for p in self.parameters.values()
-        )
-
-        _args_: list[Any] = getattr(cfg, "_args_", [])
-
-        if not isinstance(_args_, Sequence):
-            raise HydraZenValidationError(
-                f"`cfg._args_` must be a sequence type (e.g. a list), got {_args_}"
-            )
-
-        if num_pos_only and len(_args_) != num_pos_only:
-            raise HydraZenValidationError(
-                f"{self.func} has {num_pos_only} positional-only arguments, but "
-                f"`cfg` specifies {len(getattr(cfg, '_args_', []))} positional "
-                f"arguments via `_args_`."
-            )
-
-        missing_params: list[str] = []
-        for name, param in self.parameters.items():
-            if name in self._exclude:
-                continue
-
-            if param.kind in SKIPPED_PARAM_KINDS:
-                continue
-
-            if not hasattr(cfg, name) and param.default is param.empty:
-                missing_params.append(name)
-
-        if missing_params:
-            raise HydraZenValidationError(
-                f"`cfg` is missing the following fields: {', '.join(missing_params)}"
-            )
+        pass
 
     def instantiate(self, __c: Any) -> Any:
         """Instantiates each config that is extracted by `zen` before calling the wrapped function.
 
         Overwrite this to change `ZenWrapper`'s instantiation behavior."""
-        __c = instantiate(__c, _target_wrapper_=self._instantiation_wrapper)
-
-        if isinstance(__c, (ListConfig, DictConfig)):
-            return OmegaConf.to_object(__c)
-        else:
-            return __c
+        pass
 
     # TODO: add "extract" option that enables returning dict of fields
     def __call__(self, __cfg: Union[ConfigLike, str]) -> R:
@@ -482,46 +417,7 @@ class Zen(Generic[P, R]):
         hydra_main : Callable[[Any], Any]
             Equivalent to `hydra.main(zen(func), [...])()`
         """
-
-        kw = dict(config_name=config_name)
-
-        # For relative config paths, Hydra looks in the directory relative to the file
-        # in which the task function is defined. Unfortunately, it is only able to
-        # follow wrappers starting in Hydra 1.3.0. Thus `Zen.hydra_main` cannot
-        # handle string config_path entries until Hydra 1.3.0
-        if (config_path is _UNSPECIFIED_ and HYDRA_VERSION < Version(1, 2, 0)) or (
-            (
-                isinstance(config_path, str)
-                or (config_path is _UNSPECIFIED_ and version_base == "1.1")
-            )
-            and HYDRA_VERSION < Version(1, 3, 0)
-        ):  # pragma: no cover
-            warnings.warn(
-                "Specifying config_path via hydra_zen.zen(...).hydra_main "
-                "is only supported for Hydra 1.3.0+"
-            )
-        if Version(1, 3, 0) <= HYDRA_VERSION and isinstance(config_path, str):
-            # Here we create an on-the-fly wrapper so that Hydra can trace
-            # back through the wrapper to the original task function
-            # We could give `Zen` as `__wrapped__` attr, but this messes with
-            # things like `inspect.signature`.
-            #
-            # A downside of this is that `wrapper` is not pickle-able.
-            @wraps(self.func)
-            def wrapper(cfg: Any):
-                return self(cfg)
-
-            target = wrapper
-        else:
-            target = self
-
-        if config_path is not _UNSPECIFIED_:
-            kw["config_path"] = config_path
-
-        if version_base is not _UNSPECIFIED_:  # pragma: no cover
-            kw["version_base"] = version_base
-
-        return hydra.main(**kw)(target)()
+        pass
 
 
 @overload
@@ -673,13 +569,13 @@ def zen(
     >>> def f(x, y): return x + y
     >>> zen_f = zen(f)
 
-    The wrapped function – `zen_f` – accepts a single argument: a Hydra-compatible
+    The wrapped function â€“ `zen_f` â€“ accepts a single argument: a Hydra-compatible
     config that has the attributes "x" and "y":
 
     >>> zen_f
     zen[f(x, y)](cfg, /)
 
-    "Configs" – dataclasses, dictionaries, and omegaconf containers – are acceptable
+    "Configs" â€“ dataclasses, dictionaries, and omegaconf containers â€“ are acceptable
     inputs to zen-wrapped functions. Interpolated fields will be resolved and
     sub-configs will be instantiated. Excess fields in the config are unused.
 
@@ -775,7 +671,7 @@ def zen(
 
     **Using `zen` instead of `@hydra.main`**
 
-    The object returned by zen provides a convenience method – `Zen.hydra_main` –
+    The object returned by zen provides a convenience method â€“ `Zen.hydra_main` â€“
     to generate a CLI for a zen-wrapped task function:
 
     .. code-block:: python
@@ -800,8 +696,8 @@ def zen(
 
     **Validating input configs**
 
-    An input config can be validated against a zen-wrapped function – without calling
-    said function – via the `.validate` method.
+    An input config can be validated against a zen-wrapped function â€“ without calling
+    said function â€“ via the `.validate` method.
 
     >>> def f2(x: int): ...
     >>> zen_f = zen(f2)
@@ -816,36 +712,7 @@ def zen(
     >>> zen_f2.validate({"x": 1})  # Missing seed as required by pre-call
     HydraZenValidationError: `cfg` is missing the following fields: seed
     """
-    if __func is not None:
-        return cast(
-            Zen[P, R],
-            ZenWrapper(
-                __func,
-                pre_call=pre_call,
-                exclude=exclude,
-                unpack_kwargs=unpack_kwargs,
-                resolve_pre_call=resolve_pre_call,
-                run_in_context=run_in_context,
-                instantiation_wrapper=instantiation_wrapper,
-            ),
-        )
-
-    def wrap(f: Callable[P2, R2]) -> Zen[P2, R2]:
-        out = cast(
-            Zen[P2, R2],
-            ZenWrapper(
-                f,
-                pre_call=pre_call,
-                exclude=exclude,
-                unpack_kwargs=unpack_kwargs,
-                resolve_pre_call=resolve_pre_call,
-                run_in_context=run_in_context,
-                instantiation_wrapper=instantiation_wrapper,
-            ),
-        )
-        return out
-
-    return wrap
+    pass
 
 
 def default_to_config(
@@ -919,37 +786,7 @@ def default_to_config(
     x: ???
     'y': ???
     """
-
-    kw = kw.copy()
-
-    if is_dataclass(target):
-        if isinstance(target, type):
-            if issubclass(target, HydraConf):
-                # don't auto-config HydraConf
-                return target
-
-            if not kw and CustomBuildsFn._get_obj_path(target).startswith("types."):  # type: ignore
-                # handles dataclasses returned by make_config()
-                return target
-            kw.setdefault("populate_full_signature", True)
-            kw.setdefault("builds_bases", (target,))
-            return CustomBuildsFn.builds(target, **kw)
-        if kw:
-            raise ValueError(
-                "store(<dataclass-instance>, [...]) does not support specifying "
-                "keyword arguments"
-            )
-        return target
-
-    elif isinstance(target, (dict, list)):
-        # TODO: convert to OmegaConf containers?
-        return CustomBuildsFn.just(target)
-    elif isinstance(target, (DictConfig, ListConfig)):
-        return target
-    else:
-        t = cast(Callable[..., Any], target)
-        kw.setdefault("populate_full_signature", True)
-        return cast(type[DataClass_], CustomBuildsFn.builds(t, **kw))
+    pass
 
 
 class _HasName(Protocol):
@@ -958,14 +795,7 @@ class _HasName(Protocol):
 
 # TODO: Should we automatically snake-case?
 def get_name(target: _HasName) -> str:
-    name = getattr(target, "__name__", None)
-    if not isinstance(name, str):
-        raise TypeError(
-            f"Cannot infer config store entry name for {target}. It does not have a "
-            f"`__name__` attribute. Please manually specify `store({target}, "
-            f"name=<some name>, [...])`"
-        )
-    return name
+    pass
 
 
 # Arguments for ZenStore.__call__
@@ -1017,13 +847,7 @@ class _Deferred:
 def _resolve_node(entry: StoreEntry, copy: bool) -> StoreEntry:
     """Given an entry, updates the entry so that its node is not deferred, and returns
     the entry. This function is a passthrough for an entry whose node is not deferred"""
-    item = entry["node"]
-    if isinstance(item, _Deferred):
-        entry["node"] = item()
-
-    if copy:
-        entry = entry.copy()
-    return entry
+    pass
 
 
 class ZenStore:
@@ -1297,10 +1121,10 @@ class ZenStore:
 
     **Customizable store defaults via 'self-partialing' patterns**
 
-    The default values for a store's `__call__` parameters – `group`, `to_config`, etc.
-    – can easily be customized. Simply call the store with those new values and
+    The default values for a store's `__call__` parameters â€“ `group`, `to_config`, etc.
+    â€“ can easily be customized. Simply call the store with those new values and
     without specifying an object to be stored. This will return a "mirrored" store
-    instance – with the same internal state as the original store – with updated
+    instance â€“ with the same internal state as the original store â€“ with updated
     defaults.
 
     For example, let's create a store where we want to store multiple configs under a
@@ -1663,10 +1487,7 @@ class ZenStore:
         s1_copy
         {'G': ['a', 'b']}
         """
-        cp = deepcopy(self)
-
-        cp.name = store_name if store_name is not None else self.name + "_copy"
-        return cp
+        pass
 
     def copy_with_mapped_groups(
         self: Self,
@@ -1730,34 +1551,12 @@ class ZenStore:
         s3
         {None: ['a'], 'A/1/p': ['b'], 'A/2/p': ['c']}
         """
-        overwrite = overwrite_ok if overwrite_ok is not None else self._overwrite_ok
-
-        map_fn: Callable[[GroupName], GroupName] = (
-            (lambda x: old_group_to_new_group.get(x, x))  # type: ignore
-            if isinstance(old_group_to_new_group, Mapping)
-            else old_group_to_new_group
-        )
-
-        copy = self.copy(store_name)
-        for (group, name), entry in tuple(copy._internal_repo.items()):
-            new_group = map_fn(group)  # type: ignore
-            if new_group != group:
-                del copy[group, name]
-                entry["group"] = new_group
-                copy._set_entry(entry, overwrite=overwrite)
-        return copy
+        pass
 
     @property
     def groups(self) -> Sequence[GroupName]:
         """Returns a sorted list of the groups registered with this store"""
-        set_: set[GroupName] = {group for group, _ in self._internal_repo}
-        if None in set_:
-            set_.remove(None)
-            no_none = cast(set[str], set_)
-            return [None] + sorted(no_none)
-        else:
-            no_none = cast(set[str], set_)
-            return sorted(no_none)
+        pass
 
     def enqueue_all(self) -> None:
         """Add all of the store's entries to the queue to be added to hydra's store.
@@ -1778,7 +1577,7 @@ class ZenStore:
         >>> store.has_enqueued()
         True
         """
-        self._queue.update(self._internal_repo.keys())
+        pass
 
     def has_enqueued(self) -> bool:
         """`True` if this store has entries that have not yet been added to
@@ -1803,7 +1602,7 @@ class ZenStore:
         >>> store.has_enqueued()
         False
         """
-        return bool(self._queue)
+        pass
 
     def __bool__(self) -> bool:
         """`True` if entries have been added to this store, regardless of whether or
@@ -1841,14 +1640,7 @@ class ZenStore:
         s3
         {None: ['g']}
         """
-        if __other == self:
-            return
-
-        self._internal_repo.update(deepcopy(__other._internal_repo))
-        self._queue.update(__other._queue)
-        if not self._deferred_store:
-            self.add_to_hydra_store()
-        return
+        pass
 
     def merge(
         self: Self, __other: "ZenStore", store_name: Optional[str] = None
@@ -1880,9 +1672,7 @@ class ZenStore:
         s1_copy
         {None: ['f', 'g']}
         """
-        cp = self.copy(store_name)
-        cp.update(__other)
-        return cp
+        pass
 
     def __or__(self: Self, other: "ZenStore") -> Self:
         return self.merge(other)
@@ -1955,7 +1745,7 @@ class ZenStore:
         self._queue.discard(key)
 
     def delete_entry(self, group: GroupName, name: NodeName) -> None:
-        del self[group, name]
+        pass
 
     def get_entry(self, group: GroupName, name: NodeName) -> StoreEntry:
         """Access a store entry, which is a mapping that specifies the entry's
@@ -1992,23 +1782,10 @@ class ZenStore:
          'provider': None,
          'node': {'x': 1}}
         """
-        return _resolve_node(self._internal_repo[(group, name)], copy=True)
+        pass
 
     def _set_entry(self, __entry: StoreEntry, overwrite: bool) -> None:
-        _group = __entry["group"]
-        _name = __entry["name"]
-        if not overwrite and (_group, _name) in self._internal_repo:
-            raise ValueError(
-                f"(name={__entry['name']} group={__entry['group']}): "
-                f"Store entry already exists. Use a store initialized "
-                f"with `ZenStore(overwrite_ok=True)` to overwrite config store "
-                f"entries."
-            )
-        self._internal_repo[_group, _name] = __entry
-        self._queue.add((_group, _name))
-
-        if not self._deferred_store:
-            self.add_to_hydra_store()
+        pass
 
     def __contains__(self, key: Union[GroupName, tuple[GroupName, NodeName]]) -> bool:
         """Checks if group or (group, node-name) exists in zen-store."""
@@ -2085,32 +1862,7 @@ class ZenStore:
         >>> store2.add_to_hydra_store(overwrite_ok=True)  # successfully overwrites entry
 
         """
-        _store = ConfigStore.instance().store
-
-        for key in tuple(self._queue):
-            entry = _resolve_node(self._internal_repo[key], copy=False)
-            if (
-                (
-                    overwrite_ok is False
-                    or (overwrite_ok is None and not self._overwrite_ok)
-                )
-                and self._exists_in_hydra_store(
-                    name=entry["name"], group=entry["group"]
-                )
-                # It is okay if we are overwriting Hydra's default store
-                and not (
-                    (entry["name"], entry["group"]) == ("config", "hydra")
-                    and ConfigStore.instance().repo["hydra"]["config.yaml"].provider
-                    == "hydra"
-                )
-            ):
-                raise ValueError(
-                    f"(name={entry['name']} group={entry['group']}): "
-                    f"Hydra config store entry already exists. Specify "
-                    f"`overwrite_ok=True` to enable replacing config store entries"
-                )
-            _store(**entry)
-            self._queue.discard(key)
+        pass
 
     def _exists_in_hydra_store(
         self,
@@ -2119,14 +1871,7 @@ class ZenStore:
         group: GroupName,
         hydra_store: ConfigStore = ConfigStore().instance(),
     ) -> bool:
-        repo = hydra_store.repo
-
-        if group is not None:
-            for group_name in group.split("/"):
-                repo = repo.get(group_name)
-                if repo is None:
-                    return False
-        return name + ".yaml" in repo
+        pass
 
 
 store: ZenStore = ZenStore(

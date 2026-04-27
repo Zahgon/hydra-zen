@@ -54,65 +54,7 @@ def _call_target(
     target_wrapper: Callable[[F], F],
 ) -> Any:  # pragma: no cover
     """Call target (type) with args and kwargs."""
-
-    from hydra._internal.instantiate._instantiate2 import (
-        _convert_target_to_string,
-        _extract_pos_args,
-    )
-    from hydra.errors import InstantiationException
-    from omegaconf import OmegaConf
-
-    from hydra_zen.funcs import Wrappers, partial_with_wrapper, zen_processing
-
-    try:
-        args, kwargs = _extract_pos_args(args, kwargs)
-        # detaching configs from parent.
-        # At this time, everything is resolved and the parent link can cause
-        # issues when serializing objects in some scenarios.
-        for arg in args:
-            if OmegaConf.is_config(arg):
-                arg._set_parent(None)
-        for v in kwargs.values():
-            if OmegaConf.is_config(v):
-                v._set_parent(None)
-    except Exception as e:
-        msg = (
-            f"Error in collecting args and kwargs for '{_convert_target_to_string(_target_)}':"
-            + f"\n{repr(e)}"
-        )
-        if full_key:
-            msg += f"\nfull_key: {full_key}"
-
-        raise InstantiationException(msg) from e
-
-    orig_target = _target_
-    if _target_ is zen_processing:
-        kwargs["_zen_target_wrapper"] = target_wrapper
-    elif not _partial_:
-        # if _partial_ then we defer the wrapping
-        _target_ = target_wrapper(_target_)
-
-    if _partial_:
-        try:
-            return partial_with_wrapper[Any](
-                cast(Wrappers, (target_wrapper,)), orig_target, *args, **kwargs
-            )
-        except Exception as e:
-            msg = (
-                f"Error in creating partial({_convert_target_to_string(orig_target)}, ...) object:"
-                + f"\n{repr(e)}"
-            )
-            if full_key:
-                msg += f"\nfull_key: {full_key}"
-            raise InstantiationException(msg) from e
-    else:
-        try:
-            return _target_(*args, **kwargs)
-        except Exception as e:
-            msg = f"Error in call to target '{_convert_target_to_string(orig_target)}':\n{repr(e)}"
-            if full_key:
-                msg += f"\nfull_key: {full_key}"
-            raise InstantiationException(msg) from e
+    pass
 
 
 class _TightBind:  # pragma: no cover
@@ -317,30 +259,11 @@ def instantiate(
     Only a subset of primitive types are supported by Hydra's validation system [2]_.
     See :ref:`data-val` for more general data validation capabilities via hydra-zen.
     """
-    if _target_wrapper_ is None:
-        return hydra_instantiate(config, *args, **kwargs)
-
-    from hydra._internal.instantiate import _instantiate2 as inst
-
-    old = inst._call_target
-    try:
-        new_call_target = cast(
-            F, partial(_call_target, target_wrapper=_target_wrapper_)
-        )
-        inst._call_target = new_call_target
-        return hydra_instantiate(config, *args, **kwargs)
-    finally:
-        inst._call_target = old
+    pass
 
 
 def _apply_just(fn: F) -> F:
-    @wraps(fn)
-    def wrapper(cfg: Any, *args: Any, **kwargs: Any):
-        if not is_dataclass(cfg):
-            cfg = DefaultBuilds.just(cfg)
-        return fn(cfg, *args, **kwargs)
-
-    return cast(F, wrapper)
+    pass
 
 
 @_apply_just
@@ -429,8 +352,7 @@ def to_yaml(cfg: Any, *, resolve: bool = False, sort_keys: bool = False) -> str:
     a: ???
     b: ???
     """
-
-    return OmegaConf.to_yaml(cfg=cfg, resolve=resolve, sort_keys=sort_keys)
+    pass
 
 
 @_apply_just
@@ -475,7 +397,7 @@ def save_as_yaml(
     >>> load_from_yaml("test.yaml")
     {'a': 1, 'b': 'foo'}
     """
-    return OmegaConf.save(config=config, f=f, resolve=resolve)
+    pass
 
 
 def load_from_yaml(
@@ -516,4 +438,4 @@ def load_from_yaml(
     >>> load_from_yaml("test.yaml")
     {'a': 1, 'b': 'foo'}
     """
-    return OmegaConf.load(file_)
+    pass

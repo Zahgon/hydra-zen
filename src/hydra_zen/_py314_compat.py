@@ -38,11 +38,7 @@ def apply_hydra_argparse_patch() -> None:  # pragma: no cover
         @wraps(original_get_args_parser)
         def patched_get_args_parser():  # type: ignore
             """Patched version that disables help validation during parser creation."""
-            argparse.ArgumentParser._check_help = lambda self, action: None
-            try:
-                return original_get_args_parser()
-            finally:
-                argparse.ArgumentParser._check_help = original_check_help
+            pass
 
         hydra_utils.get_args_parser = patched_get_args_parser
 

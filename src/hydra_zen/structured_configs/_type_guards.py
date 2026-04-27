@@ -41,48 +41,19 @@ def safe_getattr(obj: Any, field: str, *default: Any) -> Any:
     # via its `__dataclass_fields__`. Otherwise we will get a member
     # descriptor
 
-    assert len(default) < 2
-    if (
-        hasattr(obj, "__slots__")
-        and isinstance(obj, type)
-        and is_dataclass(obj)
-        and field in obj.__slots__  # type: ignore
-    ):
-        try:
-            _field = obj.__dataclass_fields__[field]
-            if _field.default_factory is not MISSING or _field.default is MISSING:
-                raise AttributeError
-
-            return _field.default
-
-        except (KeyError, AttributeError):
-            if default:
-                return default[0]
-
-            raise AttributeError(
-                f"type object '{safe_name(obj)}' has no attribute '{field}'"
-            )
-
-    return getattr(obj, field, *default)
+    pass
 
 
 def _get_target(x: Union[HasTarget, HasTargetInst]) -> Any:
-    return safe_getattr(x, TARGET_FIELD_NAME)
+    pass
 
 
 def is_builds(x: Any) -> TypeGuard[Builds[Any]]:
-    return hasattr(x, TARGET_FIELD_NAME)
+    pass
 
 
 def is_just(x: Any) -> TypeGuard[Just[Any]]:
-    if is_builds(x) and hasattr(x, JUST_FIELD_NAME):
-        attr = _get_target(x)
-        if attr == _get_target(Just) or attr is get_obj:
-            return True
-        else:
-            # ensures we convert this branch in tests
-            return False
-    return False
+    pass
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -96,15 +67,7 @@ else:
 def is_old_partial_builds(x: Any) -> bool:  # pragma: no cover
     # We don't care about coverage here.
     # This will only be used in `get_target` and we'll be sure to cover that branch
-    if is_builds(x) and hasattr(x, "_partial_target_"):
-        attr = _get_target(x)
-        if (attr == "hydra_zen.funcs.partial" or attr is partial) and is_just(
-            safe_getattr(x, "_partial_target_")
-        ):
-            return True
-        else:  # pragma: no cover
-            return False
-    return False
+    pass
 
 
 def uses_zen_processing(x: Any) -> TypeGuard[Builds[Any]]:
@@ -123,7 +86,7 @@ def uses_zen_processing(x: Any) -> TypeGuard[Builds[Any]]:
     -----
     In order to support zen :ref:`meta-fields <meta-field>` and
     :ref:`zen wrappers <zen-wrapper>`, hydra-zen redirects Hydra to an intermediary
-    function – `hydra_zen.funcs.zen_processing` – during instantiation; i.e.
+    function â€“ `hydra_zen.funcs.zen_processing` â€“ during instantiation; i.e.
     `zen_processing` is made to be the `_target_` of the config and `_zen_target`
     indicates the object that is ultimately being configured for instantiation.
 
@@ -157,13 +120,7 @@ def uses_zen_processing(x: Any) -> TypeGuard[Builds[Any]]:
     a: 1
     hidden_field: null
     """
-    if not is_builds(x) or not hasattr(x, ZEN_TARGET_FIELD_NAME):
-        return False
-
-    attr = _get_target(x)
-    if attr != ZEN_PROCESSING_LOCATION and attr is not zen_processing:
-        return False
-    return True
+    pass
 
 
 def is_partial_builds(x: Any) -> TypeGuard[PartialBuilds[Any]]:
@@ -216,16 +173,7 @@ def is_partial_builds(x: Any) -> TypeGuard[PartialBuilds[Any]]:
     >>> instantiate(Conf)
     functools.partial(<class 'int'>, 0)
     """
-    if is_builds(x):
-        return (
-            # check if partial'd config via Hydra
-            safe_getattr(x, PARTIAL_FIELD_NAME, False) is True
-        ) or (
-            # check if partial'd config via `zen_processing`
-            uses_zen_processing(x)
-            and (safe_getattr(x, ZEN_PARTIAL_FIELD_NAME, False) is True)
-        )
-    return False
+    pass
 
 
 class HasOrigin(Protocol):
@@ -233,9 +181,4 @@ class HasOrigin(Protocol):
 
 
 def is_generic_type(x: Any) -> TypeGuard[HasOrigin]:
-    return (
-        hasattr(x, "__origin__")
-        and hasattr(x, "__args__")
-        and hasattr(x, "__parameters__")
-        and isinstance(x.__origin__, type)
-    )
+    pass

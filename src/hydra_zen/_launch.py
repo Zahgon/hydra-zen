@@ -59,7 +59,7 @@ class multirun(TUserList, Generic[T2]):
 
 
 def _safe_name(x: Any) -> str:
-    return getattr(x, "__name__", str(x))
+    pass
 
 
 def value_check(
@@ -80,16 +80,7 @@ def value_check(
     Raises
     ------
     TypeError"""
-    # check internal params
-    assert isinstance(name, str), name
-
-    if not isinstance(value, type_):
-        raise TypeError(
-            f"`{name}` must be of type(s) "
-            f"`{_safe_name(type_)}`, got {value} (type: {_safe_name(type(value))})"
-        )
-
-    return cast(T, value)
+    pass
 
 
 OverrideValues: TypeAlias = Union[
@@ -102,21 +93,7 @@ OverrideDict: TypeAlias = Mapping[str, OverrideValues]
 
 def _process_dict_overrides(overrides: OverrideDict) -> list[str]:
     """Convert dict overrides to a list of Hydra CLI compatible args"""
-    launch_overrides = []
-    for k, v in overrides.items():
-        if v is None:
-            v = "null"
-
-        value_check(
-            k,
-            v,
-            type_=(int, float, bool, str, dict, multirun, hydra_list),
-        )
-        if isinstance(v, multirun):
-            v = ",".join(str(item) for item in v)
-
-        launch_overrides.append(f"{k}={v}")
-    return launch_overrides
+    pass
 
 
 def _store_config(
@@ -147,9 +124,7 @@ def _store_config(
     ----------
     .. [1] https://hydra.cc/docs/tutorials/structured_config/config_store
     """
-    cs = ConfigStore().instance()
-    cs.store(name=config_name, node=cfg)
-    return config_name
+    pass
 
 
 @overload
@@ -390,104 +365,4 @@ def launch(
     If, instead, you want to configure a list as a single value - not to be iterated
     over in a multirun - you can instead use `hydra_zen.hydra_list`.
     """
-
-    # used for check below
-    _num_dataclass_fields = 0
-    if is_dataclass(config):
-        _num_dataclass_fields = len(fields(config))
-
-    # store config in ConfigStore
-    if to_dictconfig and is_dataclass(config):
-        # convert Dataclass to a DictConfig
-        dictconfig = OmegaConf.create(
-            OmegaConf.to_container(OmegaConf.structured(config))
-        )
-        config_name = _store_config(dictconfig, config_name)
-    else:
-        config_name = _store_config(config, config_name)
-
-    # allow user to provide a dictionary of override values
-    # instead of just a list of strings
-    overrides = overrides if overrides is not None else []
-    if isinstance(overrides, Mapping):
-        overrides = _process_dict_overrides(overrides)
-
-    override_kwargs_list = _process_dict_overrides(override_kwargs)
-    overrides += override_kwargs_list
-
-    # Initializes Hydra and add the config_path to the config search path
-    with initialize(
-        config_path=None,
-        job_name=job_name,
-        **({} if version_base is _NotSet else {"version_base": version_base}),  # type: ignore
-    ):
-        # taken from hydra.compose with support for MULTIRUN
-        gh = GlobalHydra.instance()
-        assert gh.hydra is not None
-
-        # Load configuration
-        cfg = gh.hydra.compose_config(
-            config_name=config_name,
-            overrides=overrides,
-            run_mode=RunMode.RUN if not multirun else RunMode.MULTIRUN,
-            from_shell=False,
-            with_log_configuration=with_log_configuration,
-        )
-
-        callbacks = Callbacks(cfg)
-        run_start = (
-            callbacks.on_run_start if not multirun else callbacks.on_multirun_start
-        )
-        run_start(config=cfg, config_name=config_name)
-
-        hydra_context = HydraContext(
-            config_loader=gh.config_loader(), callbacks=callbacks
-        )
-
-        if not multirun:
-            job = run_job(
-                hydra_context=hydra_context,
-                task_function=task_function,
-                config=cfg,
-                job_dir_key="hydra.run.dir",
-                job_subdir_key=None,
-                configure_logging=with_log_configuration,
-            )
-            callbacks.on_run_end(config=cfg, config_name=config_name, job_return=job)
-
-            # access the result to trigger an exception in case the job failed.
-            _ = job.return_value
-        else:
-            # Instantiate sweeper without using Hydra's Plugin discovery (Zen!)
-            sweeper = instantiate(cfg.hydra.sweeper)
-            assert isinstance(sweeper, Sweeper)
-            sweeper.setup(
-                config=cfg,
-                hydra_context=hydra_context,
-                task_function=task_function,
-            )
-
-            task_overrides = OmegaConf.to_container(
-                cfg.hydra.overrides.task, resolve=False
-            )
-            assert isinstance(task_overrides, list)
-            job = sweeper.sweep(arguments=task_overrides)
-            callbacks.on_multirun_end(config=cfg, config_name=config_name)
-
-    if is_dataclass(config):  # pragma: no cover
-        _num_dataclass_fields_after = len(fields(config))
-        if (
-            _num_dataclass_fields_after == 0
-            and _num_dataclass_fields_after < _num_dataclass_fields
-        ):
-            warnings.warn(
-                "Your dataclass-based config was mutated by this run. If you just "
-                "executed with a `hydra/launcher` that utilizes cloudpickle (e.g., "
-                "hydra-submitit-launcher), there is a known issue with dataclasses "
-                "(see: https://github.com/cloudpipe/cloudpickle/issues/386). You will "
-                "have to restart your interactive environment to run `launch` again. "
-                "To avoid this issue you can use the `launch` option: "
-                "`to_dictconfig=True`."
-            )
-
-    return job
+    pass
